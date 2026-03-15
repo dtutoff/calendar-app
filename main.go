@@ -30,10 +30,5 @@ func main() {
 	}
 
 	calendar.ShowEvent()
-
-	fmt.Println("Warniiiiiiiiiing")
-	fmt.Println("Warniiiiiiiiiing")
-	fmt.Println("Warniiiiiiiiiing")
-
 	time.Sleep(5 * time.Second)
 }
