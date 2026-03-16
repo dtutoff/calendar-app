@@ -18,18 +18,32 @@ func getNextID() string {
 	return uuid.New().String()
 }
 
-func NewEvent(title string, dateStr string) (Event, error) {
+func NewEvent(title string, dateStr string) (*Event, error) {
 	isValid := validation.IsValidTitle(title)
 	if !isValid {
-		return Event{}, validation.NewTitleError(title)
+		return &Event{}, validation.NewTitleError(title)
 	}
-	t, err := dateparse.ParseAny(dateStr)
+	time, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return Event{}, validation.NewDateError(dateStr)
+		return &Event{}, validation.NewDateError(dateStr)
 	}
-	return Event{
+	return &Event{
 		ID:      getNextID(),
 		Title:   title,
-		StartAt: t,
+		StartAt: time,
 	}, nil
+}
+
+func (e *Event) Update(title string, dateStr string) error {
+	isValid := validation.IsValidTitle(title)
+	if !isValid {
+		return validation.NewTitleError(title)
+	}
+	time, err := dateparse.ParseAny(dateStr)
+	if err != nil {
+		return validation.NewDateError(dateStr)
+	}
+	e.Title = title
+	e.StartAt = time
+	return nil
 }
