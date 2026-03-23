@@ -20,9 +20,9 @@ func NewCalendar(filename *storage.Storage) *Calendar {
 		storage:        filename,
 	}
 }
-func (c *Calendar) AddEvent(title string, date string) (*events.Event, error) {
+func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*events.Event, error) {
 
-	e, err := events.NewEvent(title, date)
+	e, err := events.NewEvent(title, date, priority)
 	if err != nil {
 		return e, err
 	}

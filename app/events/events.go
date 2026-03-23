@@ -3,22 +3,25 @@ package events
 import (
 	"time"
 
+	"github.com/SamiRemi/project/app/reminder"
 	"github.com/SamiRemi/project/app/validation"
 	"github.com/araddon/dateparse"
 	"github.com/google/uuid"
 )
 
 type Event struct {
-	ID      string    `json:"id"`
-	Title   string    `json:"title"`
-	StartAt time.Time `json:"start_at"`
+	ID       string             `json:"id"`
+	Title    string             `json:"title"`
+	StartAt  time.Time          `json:"start_at"`
+	Priority Priority           `json:"priority"`
+	Reminder *reminder.Reminder `json:"reminder"`
 }
 
 func getNextID() string {
 	return uuid.New().String()
 }
 
-func NewEvent(title string, dateStr string) (*Event, error) {
+func NewEvent(title, dateStr string, p Priority) (*Event, error) {
 	isValid := validation.IsValidTitle(title)
 	if !isValid {
 		return &Event{}, validation.NewTitleError(title)
@@ -28,9 +31,11 @@ func NewEvent(title string, dateStr string) (*Event, error) {
 		return &Event{}, validation.NewDateError(dateStr)
 	}
 	return &Event{
-		ID:      getNextID(),
-		Title:   title,
-		StartAt: time,
+		ID:       getNextID(),
+		Title:    title,
+		StartAt:  time,
+		Priority: p,
+		Reminder: nil,
 	}, nil
 }
 
@@ -46,4 +51,12 @@ func (e *Event) Update(title string, dateStr string) error {
 	e.Title = title
 	e.StartAt = time
 	return nil
+}
+
+func (e *Event) AddReminder(message string, at time.Time) {
+	e.Reminder = reminder.NewReminder(message, at)
+}
+
+func (e *Event) RemoveReminder() {
+	e.Reminder = nil
 }
