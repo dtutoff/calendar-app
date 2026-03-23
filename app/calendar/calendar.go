@@ -1,19 +1,23 @@
 package calendar
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/SamiRemi/project/app/events"
+	"github.com/SamiRemi/project/app/storage"
 )
 
 type Calendar struct {
 	calendarEvents map[string]*events.Event
+	storage        *storage.Storage
 }
 
-func NewCalendar() *Calendar {
+func NewCalendar(filename *storage.Storage) *Calendar {
 	return &Calendar{
 		calendarEvents: make(map[string]*events.Event),
+		storage:        filename,
 	}
 }
 func (c *Calendar) AddEvent(title string, date string) (*events.Event, error) {
@@ -73,5 +77,28 @@ func (c *Calendar) EditEvent(id, newTitle, dateStr string) error {
 	fmt.Println("УСпешно изменено")
 	fmt.Println("=========================")
 	fmt.Println("")
+	return nil
+}
+
+func (c *Calendar) Save() error {
+	date, err := json.Marshal(c.calendarEvents)
+	if err != nil {
+		return err
+	}
+	err = c.storage.Save(date)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (c *Calendar) Load() error {
+	data, err := c.storage.Load()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(data, &c.calendarEvents)
+	if err != nil {
+		return err
+	}
 	return nil
 }
