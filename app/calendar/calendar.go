@@ -11,13 +11,13 @@ import (
 
 type Calendar struct {
 	calendarEvents map[string]*events.Event
-	storage        *storage.Storage
+	storage        storage.Store
 }
 
-func NewCalendar(filename *storage.Storage) *Calendar {
+func NewCalendar(s storage.Store) *Calendar {
 	return &Calendar{
 		calendarEvents: make(map[string]*events.Event),
-		storage:        filename,
+		storage:        s,
 	}
 }
 func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*events.Event, error) {
@@ -42,7 +42,7 @@ func (c *Calendar) ShowEvent() error {
 	}
 	for _, v := range c.calendarEvents {
 		utcTime := v.StartAt.UTC()
-		fmt.Println(v.Title, "", utcTime.Format("02.01.2006 15:04"))
+		fmt.Println(v.Title, "", utcTime.Format("02.01.2006 15:04"), "", v.Priority)
 	}
 	return nil
 }
