@@ -63,8 +63,19 @@ func (e *Event) Update(title, dateStr string, p Priority) error {
 	return nil
 }
 
-func (e *Event) AddReminder(message string, at time.Time) {
-	e.Reminder = reminder.NewReminder(message, at)
+func (e *Event) AddReminder(message string, at time.Time) error {
+	reminder, err := reminder.NewReminder(message, at)
+	if err != nil {
+		return err
+	}
+	e.Reminder = reminder
+	actualTime := time.Now()
+	reminder.Start(
+		time.Duration((at.Hour()-actualTime.Hour())*3600) +
+			time.Duration((at.Minute()-actualTime.Minute())*60) +
+			time.Duration((at.Second() - actualTime.Second())),
+	)
+	return nil
 }
 
 func (e *Event) RemoveReminder() {

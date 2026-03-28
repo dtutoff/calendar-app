@@ -1,22 +1,31 @@
 package reminder
 
 import (
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/SamiRemi/project/app/validation"
 )
 
 type Reminder struct {
 	Message string
 	At      time.Time
 	Sent    bool
+	Timer   *time.Timer
 }
 
-func NewReminder(message string, startAt time.Time) *Reminder {
+func NewReminder(message string, startAt time.Time) (*Reminder, error) {
+	text := validation.IsValidTitle(message)
+	if !text {
+		return nil, errors.New("Неверный формат загаловка")
+	}
 	return &Reminder{
 		Message: message,
 		At:      startAt,
 		Sent:    false,
-	}
+		Timer:   nil,
+	}, nil
 }
 func (r *Reminder) Send() {
 	if r.Sent {
@@ -24,6 +33,10 @@ func (r *Reminder) Send() {
 	}
 	fmt.Println("Напоминание!", r.Message)
 	r.Sent = true
+}
+
+func (r *Reminder) Start(t time.Duration) {
+	time.AfterFunc(t*time.Second, r.Send)
 }
 
 func (r *Reminder) Stop() {

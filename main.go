@@ -2,25 +2,40 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/SamiRemi/project/app/calendar"
-	"github.com/SamiRemi/project/app/cmd"
-	"github.com/SamiRemi/project/app/storage"
+	"time"
 )
 
+func test() {
+	fmt.Println("test good")
+}
+
 func main() {
-	s := storage.NewJsonStorage("calendar.Json")
-	c := calendar.NewCalendar(s)
-	err := c.Load()
-	if err != nil {
-		fmt.Println("Warning :", err)
-		return
+	timer := time.AfterFunc(5*time.Second, test)
+	println("Таймер на 10 секунд запущен")
+
+	time.Sleep(3 * time.Second)
+	stopped := timer.Stop()
+	timer.Stop()
+
+	if stopped {
+		println("Таймер остановлен до срабатывания")
+	} else {
+		println("Таймер уже сработал или остановлен")
 	}
+	time.Sleep(10 * time.Second)
 
-	defer c.Save()
+	// s := storage.NewJsonStorage("calendar.Json")
+	// c := calendar.NewCalendar(s)
+	// err := c.Load()
+	// if err != nil {
+	// 	fmt.Println("Warning :", err)
+	// 	return
+	// }
 
-	cli := cmd.NewCmd(c)
-	cli.Run()
+	// defer c.Save()
+
+	// cli := cmd.NewCmd(c)
+	// cli.Run()
 
 	// event1, err1 := c.AddEvent("Поспать", "2026/03/17", events.PriorityHigh)
 	// if err1 != nil {

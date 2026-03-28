@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/SamiRemi/project/app/events"
 	"github.com/SamiRemi/project/app/storage"
@@ -34,6 +35,21 @@ func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*even
 	}
 	c.calendarEvents[e.ID] = e
 	return e, nil
+}
+
+func (c *Calendar) SetEventReminder(ID, message string, reminderTime time.Time) error {
+	event, exists := c.calendarEvents[ID]
+	if !exists {
+		return fmt.Errorf("событие с ID"+ID+"не найдено", event)
+	}
+
+	event.AddReminder(message, reminderTime)
+	err := c.Save()
+	if err != nil {
+		return err
+	}
+	fmt.Println("reminder good")
+	return nil
 }
 
 func (c *Calendar) ShowEvent() error {
