@@ -15,6 +15,6 @@ func (p Priority) Validate() error {
 	case PriorityLow, PriorityMedium, PriorityHigh:
 		return nil
 	default:
-		return errors.New("invalid priority")
+		return errors.New("Неверный приоритет")
 	}
 }

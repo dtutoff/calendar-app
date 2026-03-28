@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/SamiRemi/project/app/reminder"
@@ -21,35 +22,44 @@ func getNextID() string {
 	return uuid.New().String()
 }
 
-func NewEvent(title, dateStr string, p Priority) (*Event, error) {
-	isValid := validation.IsValidTitle(title)
-	if !isValid {
-		return &Event{}, validation.NewTitleError(title)
+func validateAndParse(title, dateStr string, p Priority) (string, time.Time, Priority, error) {
+	if !validation.IsValidTitle(title) {
+		return "", time.Time{}, p, fmt.Errorf("Неверный формат заголовка '%s'", title)
 	}
-	time, err := dateparse.ParseAny(dateStr)
+	parsedDate, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return &Event{}, validation.NewDateError(dateStr)
+		return "", time.Time{}, p, fmt.Errorf("Неверный формат даты '%s'", dateStr)
+	}
+
+	if err := p.Validate(); err != nil {
+		return "", time.Time{}, p, err
+	}
+
+	return title, parsedDate, p, nil
+}
+
+func NewEvent(title, dateStr string, p Priority) (*Event, error) {
+	validatedTitle, validatedDate, validatedPriority, err := validateAndParse(title, dateStr, p)
+	if err != nil {
+		return nil, err
 	}
 	return &Event{
 		ID:       getNextID(),
-		Title:    title,
-		StartAt:  time,
-		Priority: p,
+		Title:    validatedTitle,
+		StartAt:  validatedDate,
+		Priority: validatedPriority,
 		Reminder: nil,
 	}, nil
 }
 
-func (e *Event) Update(title string, dateStr string) error {
-	isValid := validation.IsValidTitle(title)
-	if !isValid {
-		return validation.NewTitleError(title)
-	}
-	time, err := dateparse.ParseAny(dateStr)
+func (e *Event) Update(title, dateStr string, p Priority) error {
+	validatedTitle, validatedDate, validatedPriority, err := validateAndParse(title, dateStr, p)
 	if err != nil {
-		return validation.NewDateError(dateStr)
+		return err
 	}
-	e.Title = title
-	e.StartAt = time
+	e.Title = validatedTitle
+	e.StartAt = validatedDate
+	e.Priority = validatedPriority
 	return nil
 }
 
