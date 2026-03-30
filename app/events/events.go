@@ -1,6 +1,7 @@
 package events
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/google/uuid"
 )
+
+var ErrNoReminder = errors.New("напоминания не существует")
 
 type Event struct {
 	ID       string             `json:"id"`
@@ -78,6 +81,16 @@ func (e *Event) AddReminder(message string, at time.Time) error {
 	return nil
 }
 
-func (e *Event) RemoveReminder() {
+func (e *Event) RemoveReminder() error {
+	if e.Reminder == nil {
+		return ErrNoReminder
+	}
+	stopped := e.Reminder.Stop()
+	if stopped {
+		fmt.Println("Таймер остановлен до срабатывания")
+	} else {
+		fmt.Println("Таймер уже сработал или остановлен")
+	}
 	e.Reminder = nil
+	return nil
 }

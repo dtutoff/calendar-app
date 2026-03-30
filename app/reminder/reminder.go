@@ -36,8 +36,19 @@ func (r *Reminder) Send() {
 }
 
 func (r *Reminder) Start(t time.Duration) {
+	if r.Timer != nil {
+		r.Timer.Stop()
+		r.Timer = nil
+	}
 	time.AfterFunc(t*time.Second, r.Send)
 }
 
-func (r *Reminder) Stop() {
+func (r *Reminder) Stop() bool {
+	if r.Timer != nil {
+		fmt.Println("Напоминание удалено")
+		return r.Timer.Stop()
+	} else {
+		fmt.Println("Таймер пуст")
+	}
+	return false
 }

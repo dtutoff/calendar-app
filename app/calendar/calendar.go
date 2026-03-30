@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/SamiRemi/project/app/events"
 	"github.com/SamiRemi/project/app/storage"
+	"github.com/araddon/dateparse"
 )
 
 type Calendar struct {
@@ -37,22 +37,40 @@ func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*even
 	return e, nil
 }
 
-func (c *Calendar) SetEventReminder(ID, message string, reminderTime time.Time) error {
+func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
 	event, exists := c.calendarEvents[ID]
 	if !exists {
 		return fmt.Errorf("событие с ID"+ID+"не найдено", event)
 	}
 
-	event.AddReminder(message, reminderTime)
-	err := c.Save()
+	if event.Reminder != nil {
+		return fmt.Errorf("Напоминание уже существует")
+	}
+
+	startAt, err := dateparse.ParseAny(dateStr)
 	if err != nil {
 		return err
 	}
-	fmt.Println("reminder good")
+	err = event.AddReminder(message, startAt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Calendar) CancelEventReminder(ID string) error {
+	event, exists := c.calendarEvents[ID]
+	if !exists {
+		return fmt.Errorf("событие с ID"+ID+"не найдено", event)
+	}
+	event.RemoveReminder()
+	c.Save()
+	fmt.Println("Напоминание удалено")
 	return nil
 }
 
 func (c *Calendar) ShowEvent() error {
+
 	if len(c.calendarEvents) == 0 {
 		return errors.New("Список пуст")
 
@@ -60,6 +78,12 @@ func (c *Calendar) ShowEvent() error {
 	for _, v := range c.calendarEvents {
 		utcTime := v.StartAt.UTC()
 		fmt.Println(v.Title, "", utcTime.Format("02.01.2006 15:04"), "", v.Priority, v.ID)
+
+		err := v.Reminder
+		if err != nil {
+			fmt.Println("Есть напоминание", v.Reminder.Message, " ", v.Reminder.Timer)
+
+		}
 	}
 	return nil
 }

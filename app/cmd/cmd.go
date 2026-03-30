@@ -96,6 +96,34 @@ func (c *Cmd) executor(input string) {
 			fmt.Println(err)
 		}
 
+	case "setreminder":
+		if len(parts) != 4 {
+			fmt.Println("warning")
+			fmt.Println("Format")
+			return
+		}
+		ID := parts[1]
+		Message := parts[2]
+		DateStr := parts[3]
+		err := c.calendar.SetEventReminder(ID, Message, DateStr)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("Напоминание успешно добавлено!")
+		fmt.Println("")
+
+	case "cancelreminder":
+		if len(parts) != 2 {
+			fmt.Println("warning")
+			fmt.Println("Format")
+		}
+		ID := parts[1]
+		err := c.calendar.CancelEventReminder(ID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	case "help":
 		if len(parts) != 1 {
 			fmt.Println("Формат: help")
@@ -149,6 +177,8 @@ func (c *Cmd) completer(d prompt.Document) []prompt.Suggest {
 		{Text: "help", Description: "Показать справку"},
 		{Text: "exit", Description: "Выйти и cохранить программу"},
 		{Text: "exinot", Description: "Выйти без сохранения из программы"},
+		{Text: "setreminder", Description: "xz"},
+		{Text: "cancelreminder", Description: "xz"},
 	}
 	return prompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true)
 }
