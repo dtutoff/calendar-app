@@ -50,14 +50,13 @@ func (c *Cmd) executor(input string) {
 	switch cmd {
 	case "add":
 		if len(parts) < 4 {
+			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: add \"название события\" \"дата и время\" \"приоритет\"")
 			return
 		}
-
 		title := parts[1]
 		date := parts[2]
 		priority := events.Priority(parts[3])
-
 		e, err := c.calendar.AddEvent(title, date, priority)
 		if err != nil {
 			fmt.Println("Ошибка добавления:", err)
@@ -67,27 +66,27 @@ func (c *Cmd) executor(input string) {
 
 	case "remove":
 		if len(parts) != 2 {
+			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: remove \"ID события\"")
 			return
 		}
-
 		ID := parts[1]
 		err := c.calendar.DeleteEvent(ID)
 		if err != nil {
 			fmt.Println("Ошибка", err)
 			return
 		}
+
 	case "update":
 		if len(parts) != 5 {
+			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: update \"ID\" \"Новое название события\" \"Новоя дата и время\" \"Новый приоритет\"")
 			return
 		}
-
 		ID := parts[1]
 		title := parts[2]
 		date := parts[3]
 		priority := events.Priority(parts[4])
-
 		err := c.calendar.EditEvent(ID, title, date, priority)
 		if err != nil {
 			fmt.Println("Ошибка изминения :", err)
@@ -103,8 +102,8 @@ func (c *Cmd) executor(input string) {
 
 	case "setreminder":
 		if len(parts) != 4 {
-			fmt.Println("warning")
-			fmt.Println("Format")
+			fmt.Println("Неверный формат команды")
+			fmt.Println("Формат: setreminder \"ID события\" \"сообщение\" \"дата и время\"")
 			return
 		}
 		ID := parts[1]
@@ -120,8 +119,8 @@ func (c *Cmd) executor(input string) {
 
 	case "cancelreminder":
 		if len(parts) != 2 {
-			fmt.Println("warning")
-			fmt.Println("Format")
+			fmt.Println("Неверный формат команды")
+			fmt.Println("Формат: cancelreminder \"ID события\"")
 		}
 		ID := parts[1]
 		err := c.calendar.CancelEventReminder(ID)
@@ -148,6 +147,12 @@ func (c *Cmd) executor(input string) {
 		fmt.Println("")
 		fmt.Println("update - Формат: update \"ID\" \"Новое название события\" \"Новоя дата и время\" \"Новый приоритет\"")
 		fmt.Println("Редактирует событие по ID")
+		fmt.Println("")
+		fmt.Println("setreminder - Формат: setreminder \"ID события\" \"сообщение\" \"дата и время\"")
+		fmt.Println("Дабовляет напоминание событию")
+		fmt.Println("")
+		fmt.Println("cancelreminder - Формат: cancelreminder \"ID события\"")
+		fmt.Println("Удаляет напоминание у события")
 		fmt.Println("")
 		fmt.Println("exit - Формат: exit")
 		fmt.Println("Закрывает и сохраняет программу")
@@ -181,10 +186,10 @@ func (c *Cmd) completer(d prompt.Document) []prompt.Suggest {
 		{Text: "remove", Description: "Удалить событие"},
 		{Text: "update", Description: "Редактировать собите"},
 		{Text: "help", Description: "Показать справку"},
-		{Text: "exit", Description: "Выйти и cохранить программу"},
+		{Text: "setreminder", Description: "Дабовляет напоминание событию"},
+		{Text: "cancelreminder", Description: "Удаляет напоминание у события"},
 		{Text: "exinot", Description: "Выйти без сохранения из программы"},
-		{Text: "setreminder", Description: "xz"},
-		{Text: "cancelreminder", Description: "xz"},
+		{Text: "exit", Description: "Выйти и cохранить программу"},
 	}
 	return prompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true)
 }

@@ -1,7 +1,24 @@
 package validation
 
 import (
+	"errors"
 	"regexp"
+)
+
+var (
+	IncorectPriorityError     = errors.New("Неверный приоритет")
+	TitleError                = errors.New("Событие с таким именем уже существует!")
+	ListError                 = errors.New("Нельзя ввести пустое имя")
+	EqualError                = errors.New("Календарь равен нулю")
+	EventNotFoundError        = errors.New("событие с ID не найдено")
+	ReminderAlreadyExistError = errors.New("Напоминание уже существует")
+	ReminderNotExistError     = errors.New("Напоминания не существует")
+	DateFormatError           = errors.New("некорректный формат даты ")
+	IncorectHeaderFormat      = errors.New("Неверный формат заголовка ")
+	ReminderDateError         = errors.New("дата напоминания уже прошла")
+	ReminderAddEventError     = errors.New("ошибка при добавлении напоминания для события")
+	EmptyListError            = errors.New("Список пуст")
+	ArchiveEmptyError         = errors.New("Архив пуст")
 )
 
 func IsValidTitle(title string) bool {

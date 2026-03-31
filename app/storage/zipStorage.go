@@ -2,9 +2,10 @@ package storage
 
 import (
 	"archive/zip"
-	"errors"
 	"io"
 	"os"
+
+	"github.com/SamiRemi/project/app/validation"
 )
 
 type ZipStorage struct {
@@ -45,7 +46,7 @@ func (z *ZipStorage) Load() ([]byte, error) {
 	defer r.Close()
 
 	if len(r.File) == 0 {
-		return nil, errors.New("Архив пуст")
+		return nil, validation.ArchiveEmptyError
 	}
 	file := r.File[0]
 	rc, err := file.Open()

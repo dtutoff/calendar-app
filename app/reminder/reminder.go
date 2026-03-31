@@ -1,7 +1,6 @@
 package reminder
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -18,7 +17,7 @@ type Reminder struct {
 func NewReminder(message string, startAt time.Time, notify func(msg string)) (*Reminder, error) {
 	text := validation.IsValidTitle(message)
 	if !text {
-		return nil, errors.New("Неверный формат загаловка")
+		return nil, validation.IncorectHeaderFormat
 	}
 	return &Reminder{
 		Message: message,

@@ -25,5 +25,5 @@ func (s *JsonStorage) Load() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return data, err
+	return data, nil
 }

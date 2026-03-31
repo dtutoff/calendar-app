@@ -2,12 +2,12 @@ package calendar
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/SamiRemi/project/app/events"
 	"github.com/SamiRemi/project/app/storage"
+	"github.com/SamiRemi/project/app/validation"
 	"github.com/araddon/dateparse"
 )
 
@@ -28,16 +28,15 @@ func NewCalendar(s storage.Store) *Calendar {
 }
 
 func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*events.Event, error) {
-
 	e, err := events.NewEvent(title, date, priority)
 	if err != nil {
 		return nil, err
 	}
 	if _, ok := c.calendarEvents[title]; ok {
-		return nil, errors.New("Событие с именем " + title + " уже существует!")
+		return nil, validation.TitleError
 	}
 	if len(title) == 0 {
-		return nil, errors.New("Нельзя ввести пустое имя")
+		return nil, validation.ListError
 	}
 	c.calendarEvents[e.ID] = e
 	return e, nil
@@ -49,37 +48,34 @@ func (c *Calendar) Notify(msg string) {
 
 func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
 	if c == nil {
-		return fmt.Errorf("Календарь равен нулю")
+		return validation.EqualError
 	}
 	event, exists := c.calendarEvents[ID]
 	if !exists {
-		return fmt.Errorf("событие с ID '%s' не найдено", ID)
+		return validation.EventNotFoundError
 	}
-
 	if event.Reminder != nil {
-		return fmt.Errorf("Напоминание уже существует")
+		return validation.ReminderAlreadyExistError
 	}
-
 	startAt, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return fmt.Errorf("некорректный формат даты '%s': %w", dateStr, err)
+		return validation.DateFormatError
 	}
 	if startAt.Before(time.Now()) {
-		return fmt.Errorf("дата напоминания '%s' уже прошла", dateStr)
+		return validation.ReminderDateError
 	}
 
 	err = event.AddReminder(message, startAt, c.Notify)
 	if err != nil {
-		return fmt.Errorf("ошибка при добавлении напоминания для события '%s': %w", ID, err)
+		return validation.ReminderAddEventError
 	}
-
 	return nil
 }
 
 func (c *Calendar) CancelEventReminder(ID string) error {
 	event, exists := c.calendarEvents[ID]
 	if !exists {
-		return fmt.Errorf("событие с ID"+ID+"не найдено", event)
+		return validation.EventNotFoundError
 	}
 	event.RemoveReminder()
 	c.Save()
@@ -89,8 +85,7 @@ func (c *Calendar) CancelEventReminder(ID string) error {
 
 func (c *Calendar) ShowEvent() error {
 	if len(c.calendarEvents) == 0 {
-		return errors.New("Список пуст")
-
+		return validation.EmptyListError
 	}
 	for _, v := range c.calendarEvents {
 		utcTime := v.StartAt.UTC()
@@ -99,7 +94,6 @@ func (c *Calendar) ShowEvent() error {
 		err := v.Reminder
 		if err != nil {
 			fmt.Println("Есть напоминание", v.Reminder.Message, " ", v.Reminder.Timer)
-
 		}
 	}
 	return nil
@@ -108,7 +102,7 @@ func (c *Calendar) ShowEvent() error {
 func (c *Calendar) DeleteEvent(ID string) error {
 	e := c.calendarEvents[ID]
 	if _, ok := c.calendarEvents[ID]; !ok {
-		return errors.New("Событие с ID " + ID + " не существует")
+		return validation.EventNotFoundError
 	}
 	delete(c.calendarEvents, e.ID)
 	c.Save()
@@ -124,7 +118,7 @@ func (c *Calendar) DeleteEvent(ID string) error {
 func (c *Calendar) EditEvent(id, newTitle, dateStr string, p events.Priority) error {
 	e, exist := c.calendarEvents[id]
 	if !exist {
-		return fmt.Errorf("Событие с ключом %q не найдено", id)
+		return validation.EventNotFoundError
 	}
 	err := e.Update(newTitle, dateStr, p)
 	if err != nil {

@@ -1,6 +1,8 @@
 package events
 
-import "errors"
+import (
+	"github.com/SamiRemi/project/app/validation"
+)
 
 type Priority string
 
@@ -15,6 +17,6 @@ func (p Priority) Validate() error {
 	case PriorityLow, PriorityMedium, PriorityHigh:
 		return nil
 	default:
-		return errors.New("Неверный приоритет")
+		return validation.IncorectPriorityError
 	}
 }

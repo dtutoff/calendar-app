@@ -1,7 +1,6 @@
 package events
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,8 +9,6 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/google/uuid"
 )
-
-var ErrNoReminder = errors.New("напоминания не существует")
 
 type Event struct {
 	ID       string             `json:"id"`
@@ -27,11 +24,12 @@ func getNextID() string {
 
 func validateAndParse(title, dateStr string, p Priority) (string, time.Time, Priority, error) {
 	if !validation.IsValidTitle(title) {
-		return "", time.Time{}, p, fmt.Errorf("Неверный формат заголовка '%s'", title)
+		return "", time.Time{}, p, validation.IncorectHeaderFormat
 	}
+
 	parsedDate, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return "", time.Time{}, p, fmt.Errorf("Неверный формат даты '%s'", dateStr)
+		return "", time.Time{}, p, validation.DateFormatError
 	}
 
 	if err := p.Validate(); err != nil {
@@ -83,7 +81,7 @@ func (e *Event) AddReminder(message string, at time.Time, notify func(msg string
 
 func (e *Event) RemoveReminder() error {
 	if e.Reminder == nil {
-		return ErrNoReminder
+		return validation.ReminderNotExistError
 	}
 	stopped := e.Reminder.Stop()
 	if stopped {
