@@ -22,6 +22,11 @@ func NewCmd(c *calendar.Calendar) *Cmd {
 }
 
 func (c *Cmd) Run() {
+	go func() {
+		for msg := range c.calendar.Notification {
+			fmt.Println("Напоминание :", msg)
+		}
+	}()
 	p := prompt.New(
 		c.executor,
 		c.completer,
@@ -160,6 +165,7 @@ func (c *Cmd) executor(input string) {
 			fmt.Println(err)
 			return
 		}
+		close(c.calendar.Notification)
 		os.Exit(0)
 
 	default:

@@ -15,7 +15,7 @@ type Reminder struct {
 	Timer   *time.Timer
 }
 
-func NewReminder(message string, startAt time.Time) (*Reminder, error) {
+func NewReminder(message string, startAt time.Time, notify func(msg string)) (*Reminder, error) {
 	text := validation.IsValidTitle(message)
 	if !text {
 		return nil, errors.New("Неверный формат загаловка")

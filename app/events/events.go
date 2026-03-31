@@ -66,8 +66,8 @@ func (e *Event) Update(title, dateStr string, p Priority) error {
 	return nil
 }
 
-func (e *Event) AddReminder(message string, at time.Time) error {
-	reminder, err := reminder.NewReminder(message, at)
+func (e *Event) AddReminder(message string, at time.Time, notify func(msg string)) error {
+	reminder, err := reminder.NewReminder(message, at, notify)
 	if err != nil {
 		return err
 	}

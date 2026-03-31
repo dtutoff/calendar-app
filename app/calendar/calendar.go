@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/SamiRemi/project/app/events"
 	"github.com/SamiRemi/project/app/storage"
@@ -13,14 +14,19 @@ import (
 type Calendar struct {
 	calendarEvents map[string]*events.Event
 	storage        storage.Store
+	Notification   chan string
+	closed         bool
 }
 
 func NewCalendar(s storage.Store) *Calendar {
 	return &Calendar{
 		calendarEvents: make(map[string]*events.Event),
 		storage:        s,
+		Notification:   make(chan string),
+		closed:         false,
 	}
 }
+
 func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*events.Event, error) {
 
 	e, err := events.NewEvent(title, date, priority)
@@ -37,10 +43,17 @@ func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*even
 	return e, nil
 }
 
+func (c *Calendar) Notify(msg string) {
+	c.Notification <- msg
+}
+
 func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
+	if c == nil {
+		return fmt.Errorf("Календарь равен нулю")
+	}
 	event, exists := c.calendarEvents[ID]
 	if !exists {
-		return fmt.Errorf("событие с ID"+ID+"не найдено", event)
+		return fmt.Errorf("событие с ID '%s' не найдено", ID)
 	}
 
 	if event.Reminder != nil {
@@ -49,12 +62,17 @@ func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
 
 	startAt, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("некорректный формат даты '%s': %w", dateStr, err)
 	}
-	err = event.AddReminder(message, startAt)
+	if startAt.Before(time.Now()) {
+		return fmt.Errorf("дата напоминания '%s' уже прошла", dateStr)
+	}
+
+	err = event.AddReminder(message, startAt, c.Notify)
 	if err != nil {
-		return err
+		return fmt.Errorf("ошибка при добавлении напоминания для события '%s': %w", ID, err)
 	}
+
 	return nil
 }
 
@@ -70,7 +88,6 @@ func (c *Calendar) CancelEventReminder(ID string) error {
 }
 
 func (c *Calendar) ShowEvent() error {
-
 	if len(c.calendarEvents) == 0 {
 		return errors.New("Список пуст")
 
@@ -136,4 +153,7 @@ func (c *Calendar) Load() error {
 		return err
 	}
 	return json.Unmarshal(data, &c.calendarEvents)
+}
+func (c *Calendar) Close() {
+	close(c.Notification)
 }
