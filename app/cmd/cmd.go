@@ -13,18 +13,26 @@ import (
 
 type Cmd struct {
 	calendar *calendar.Calendar
-}
-
-func NewCmd(c *calendar.Calendar) *Cmd {
-	return &Cmd{
-		calendar: c,
-	}
+	logger   *Logger
 }
 
 func (c *Cmd) Run() {
+	err := c.logger.LoadFromFile()
+	if err != nil {
+		warningMsg := ("Предупреждение: не удалось загрузить лог из файла: " + err.Error())
+		fmt.Println(warningMsg)
+		c.logger.Log(warningMsg)
+	} else {
+		loadMsg := ("Лог загружен из файла: " + c.logger.filePath)
+		c.logger.Log(loadMsg)
+	}
+	c.logger.Log("Программа запущена")
+
 	go func() {
 		for msg := range c.calendar.Notification {
-			fmt.Println("Напоминание :", msg)
+			notificationMsg := "Напоминание :" + msg
+			fmt.Println(notificationMsg)
+			c.logger.Log(notificationMsg)
 		}
 	}()
 	p := prompt.New(
@@ -36,6 +44,7 @@ func (c *Cmd) Run() {
 }
 
 func (c *Cmd) executor(input string) {
+	c.logger.Log("Ввод пользователя :" + input)
 	err := c.calendar.Load()
 	if err != nil {
 		fmt.Println("Ошибка загрузки:", err)
@@ -50,8 +59,10 @@ func (c *Cmd) executor(input string) {
 	switch cmd {
 	case "add":
 		if len(parts) < 4 {
+			errorMsg := ("Ошибка : неверный формат команды add")
 			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: add \"название события\" \"дата и время\" \"приоритет\"")
+			c.logger.Log(errorMsg)
 			return
 		}
 		title := parts[1]
@@ -59,28 +70,41 @@ func (c *Cmd) executor(input string) {
 		priority := events.Priority(parts[3])
 		e, err := c.calendar.AddEvent(title, date, priority)
 		if err != nil {
-			fmt.Println("Ошибка добавления:", err)
+			errorMessage := ("Ошибка добавления: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
 		} else {
-			fmt.Println("Событие:", e.Title, "добавлено")
+			successMsg := ("Событие: " + e.Title + " добавлено")
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
 		}
 
 	case "remove":
 		if len(parts) != 2 {
+			errorMsg := ("Ошибка: неверный формат команды remove")
 			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: remove \"ID события\"")
+			c.logger.Log(errorMsg)
 			return
 		}
 		ID := parts[1]
 		err := c.calendar.DeleteEvent(ID)
 		if err != nil {
-			fmt.Println("Ошибка", err)
-			return
+			errorMessage := ("Ошибка удаления: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Событие с ID " + ID + " удалено")
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
 		}
 
 	case "update":
 		if len(parts) != 5 {
+			errorMsg := ("Ошибка: неверный формат команды update")
 			fmt.Println("Неверный формат команды")
-			fmt.Println("Формат: update \"ID\" \"Новое название события\" \"Новоя дата и время\" \"Новый приоритет\"")
+			fmt.Println("Формат: update \"ID\" \"Новое название события\" \"Новая дата и время\" \"Новый приоритет\"")
+			c.logger.Log(errorMsg)
 			return
 		}
 		ID := parts[1]
@@ -89,21 +113,35 @@ func (c *Cmd) executor(input string) {
 		priority := events.Priority(parts[4])
 		err := c.calendar.EditEvent(ID, title, date, priority)
 		if err != nil {
-			fmt.Println("Ошибка изминения :", err)
+			errorMessage := ("Ошибка изменения: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Событие с ID " + ID + " обновлено: " + title)
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
 		}
-		fmt.Println("Событие:", title, "Изминено")
 
 	case "list":
+		c.logger.Log("Команда list: получение списка событий")
 		err := c.calendar.ShowEvent()
 		if err != nil {
-			fmt.Println("Формат: list")
-			fmt.Println(err)
+			errorMessage := ("Ошибка при получении списка событий: " + err.Error())
+			fmt.Println("Ошибка при выполнении list")
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Список событий успешно выведен")
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
 		}
 
 	case "setreminder":
 		if len(parts) != 4 {
+			errorMsg := ("Ошибка: неверный формат команды setreminder")
 			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: setreminder \"ID события\" \"сообщение\" \"дата и время\"")
+			c.logger.Log(errorMsg)
 			return
 		}
 		ID := parts[1]
@@ -111,23 +149,73 @@ func (c *Cmd) executor(input string) {
 		DateStr := parts[3]
 		err := c.calendar.SetEventReminder(ID, Message, DateStr)
 		if err != nil {
-			fmt.Println(err)
-			return
+			errorMessage := ("Ошибка установки напоминания: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Напоминание для события ID " + ID + " успешно установлено")
+			fmt.Println("Напоминание успешно добавлено!")
+			fmt.Println("")
+			c.logger.Log(successMsg)
 		}
-		fmt.Println("Напоминание успешно добавлено!")
-		fmt.Println("")
 
 	case "cancelreminder":
 		if len(parts) != 2 {
+			errorMsg := ("Ошибка: неверный формат команды cancelreminder")
 			fmt.Println("Неверный формат команды")
 			fmt.Println("Формат: cancelreminder \"ID события\"")
+			c.logger.Log(errorMsg)
+			return
 		}
 		ID := parts[1]
 		err := c.calendar.CancelEventReminder(ID)
 		if err != nil {
-			fmt.Println(err)
+			errorMessage := ("Ошибка отмены напоминания: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Напоминание для события ID " + ID + " отменено")
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
+		}
+
+	case "log":
+		if len(parts) != 1 {
+			fmt.Println("Формат : log")
+			c.logger.Log("Ошибка : неверный формат команды log")
 			return
 		}
+		fmt.Println("=== ЛОГ ПРОГРАММЫ ===")
+		for _, entry := range c.logger.entries {
+			fmt.Println(entry)
+		}
+		fmt.Println("===================")
+		c.logger.Log("Выведен лог программы")
+
+	case "savelog":
+		err := c.logger.SaveToFile()
+		if err != nil {
+			errorMessage := ("Ошибка сохранения лога: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Лог успешно сохранён в файл: " + c.logger.filePath)
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
+		}
+
+	case "loadlog":
+		err := c.logger.LoadFromFile()
+		if err != nil {
+			errorMessage := ("Ошибка загрузки лога: " + err.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Лог успешно загружен из файла: " + c.logger.filePath)
+			fmt.Println(successMsg)
+			c.logger.Log(successMsg)
+		}
+
 	case "help":
 		if len(parts) != 1 {
 			fmt.Println("Формат: help")
@@ -154,6 +242,15 @@ func (c *Cmd) executor(input string) {
 		fmt.Println("cancelreminder - Формат: cancelreminder \"ID события\"")
 		fmt.Println("Удаляет напоминание у события")
 		fmt.Println("")
+		fmt.Println("log - Формат: log")
+		fmt.Println("Показывает весь лог программы")
+		fmt.Println("")
+		fmt.Println("savelog - Формат: savelog")
+		fmt.Println("Сохраняет лог в файл")
+		fmt.Println("")
+		fmt.Println("loadlog - Формат: loadlog")
+		fmt.Println("Загружает лог из файла")
+		fmt.Println("")
 		fmt.Println("exit - Формат: exit")
 		fmt.Println("Закрывает и сохраняет программу")
 		fmt.Println("")
@@ -169,6 +266,15 @@ func (c *Cmd) executor(input string) {
 		if err != nil {
 			fmt.Println(err)
 			return
+		}
+		saveErr := c.logger.SaveToFile()
+		if saveErr != nil {
+			errorMessage := ("Ошибка сохранения лога: " + saveErr.Error())
+			fmt.Println(errorMessage)
+			c.logger.Log(errorMessage)
+		} else {
+			successMsg := ("Лог успешно сохранён в файл: " + c.logger.filePath)
+			c.logger.Log(successMsg)
 		}
 		close(c.calendar.Notification)
 		os.Exit(0)
@@ -186,8 +292,11 @@ func (c *Cmd) completer(d prompt.Document) []prompt.Suggest {
 		{Text: "remove", Description: "Удалить событие"},
 		{Text: "update", Description: "Редактировать собите"},
 		{Text: "help", Description: "Показать справку"},
-		{Text: "setreminder", Description: "Дабовляет напоминание событию"},
-		{Text: "cancelreminder", Description: "Удаляет напоминание у события"},
+		{Text: "setreminder", Description: "Дабовить напоминание событию"},
+		{Text: "cancelreminder", Description: "Удалить напоминание у события"},
+		{Text: "log", Description: "Показать лог программы"},
+		{Text: "savelog", Description: "Сохранить лог в файл"},
+		{Text: "loadlog", Description: "Загрузить лог из файла"},
 		{Text: "exinot", Description: "Выйти без сохранения из программы"},
 		{Text: "exit", Description: "Выйти и cохранить программу"},
 	}
