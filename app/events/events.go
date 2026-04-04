@@ -24,7 +24,7 @@ func getNextID() string {
 
 func validateAndParse(title, dateStr string, p Priority) (string, time.Time, Priority, error) {
 	if !validation.IsValidTitle(title) {
-		return "", time.Time{}, p, validation.IncorectHeaderFormat
+		return "", time.Time{}, p, validation.IncorrectHeaderFormat
 	}
 
 	parsedDate, err := dateparse.ParseAny(dateStr)

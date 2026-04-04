@@ -17,7 +17,7 @@ type Reminder struct {
 func NewReminder(message string, startAt time.Time, notify func(msg string)) (*Reminder, error) {
 	text := validation.IsValidTitle(message)
 	if !text {
-		return nil, validation.IncorectHeaderFormat
+		return nil, validation.IncorrectHeaderFormat
 	}
 	return &Reminder{
 		Message: message,

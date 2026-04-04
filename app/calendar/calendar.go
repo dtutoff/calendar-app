@@ -27,6 +27,10 @@ func NewCalendar(s storage.Store) *Calendar {
 	}
 }
 
+func show() {
+	fmt.Println("=========================")
+}
+
 func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*events.Event, error) {
 	e, err := events.NewEvent(title, date, priority)
 	if err != nil {
@@ -106,11 +110,9 @@ func (c *Calendar) DeleteEvent(ID string) error {
 	}
 	delete(c.calendarEvents, e.ID)
 	c.Save()
-	fmt.Println("=========================")
-	fmt.Println("Событие :", e.Title)
-	fmt.Println("С ID :", e.ID)
-	fmt.Println("Удалено")
-	fmt.Println("=========================")
+	show()
+	fmt.Println("Событие :", e.Title, "Удалено")
+	show()
 	fmt.Println("")
 	return nil
 }
@@ -125,11 +127,9 @@ func (c *Calendar) EditEvent(id, newTitle, dateStr string, p events.Priority) er
 		return err
 	}
 	c.Save()
-	fmt.Println("=========================")
-	fmt.Println("Событие :", newTitle)
-	fmt.Println("С ID :", e.ID)
-	fmt.Println("Уcпешно изменено")
-	fmt.Println("=========================")
+	show()
+	fmt.Println("Событие :", newTitle, "Уcпешно изменено")
+	show()
 	fmt.Println("")
 	return nil
 }
