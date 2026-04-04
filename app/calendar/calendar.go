@@ -37,10 +37,10 @@ func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*even
 		return nil, err
 	}
 	if _, ok := c.calendarEvents[title]; ok {
-		return nil, validation.TitleError
+		return nil, fmt.Errorf("Не удается создать событие : %w", validation.TitleError)
 	}
 	if len(title) == 0 {
-		return nil, validation.ListError
+		return nil, fmt.Errorf("Не удается создать событие : %w", validation.ListError)
 	}
 	c.calendarEvents[e.ID] = e
 	return e, nil
@@ -52,26 +52,26 @@ func (c *Calendar) Notify(msg string) {
 
 func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
 	if c == nil {
-		return validation.EqualError
+		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.EqualError)
 	}
 	event, exists := c.calendarEvents[ID]
 	if !exists {
-		return validation.EventNotFoundError
+		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.EventNotFoundError)
 	}
 	if event.Reminder != nil {
-		return validation.ReminderAlreadyExistError
+		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.ReminderAlreadyExistError)
 	}
 	startAt, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return validation.DateFormatError
+		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.DateFormatError)
 	}
 	if startAt.Before(time.Now()) {
-		return validation.ReminderDateError
+		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.ReminderDateError)
 	}
 
 	err = event.AddReminder(message, startAt, c.Notify)
 	if err != nil {
-		return validation.ReminderAddEventError
+		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.ReminderAddEventError)
 	}
 	return nil
 }
@@ -79,7 +79,7 @@ func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
 func (c *Calendar) CancelEventReminder(ID string) error {
 	event, exists := c.calendarEvents[ID]
 	if !exists {
-		return validation.EventNotFoundError
+		return fmt.Errorf("Не удается удалить напоминание :%w ", validation.EventNotFoundError)
 	}
 	event.RemoveReminder()
 	c.Save()
@@ -89,7 +89,7 @@ func (c *Calendar) CancelEventReminder(ID string) error {
 
 func (c *Calendar) ShowEvent() error {
 	if len(c.calendarEvents) == 0 {
-		return validation.EmptyListError
+		return fmt.Errorf("Не удается показать список всех событий :%w ", validation.EmptyListError)
 	}
 	for _, v := range c.calendarEvents {
 		utcTime := v.StartAt.UTC()
@@ -106,7 +106,7 @@ func (c *Calendar) ShowEvent() error {
 func (c *Calendar) DeleteEvent(ID string) error {
 	e := c.calendarEvents[ID]
 	if _, ok := c.calendarEvents[ID]; !ok {
-		return validation.EventNotFoundError
+		return fmt.Errorf("Не удается удалить событие :%w ", validation.EventNotFoundError)
 	}
 	delete(c.calendarEvents, e.ID)
 	c.Save()
@@ -120,7 +120,7 @@ func (c *Calendar) DeleteEvent(ID string) error {
 func (c *Calendar) EditEvent(id, newTitle, dateStr string, p events.Priority) error {
 	e, exist := c.calendarEvents[id]
 	if !exist {
-		return validation.EventNotFoundError
+		return fmt.Errorf("Не удается изменить событие :%w ", validation.EventNotFoundError)
 	}
 	err := e.Update(newTitle, dateStr, p)
 	if err != nil {

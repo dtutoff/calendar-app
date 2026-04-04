@@ -19,6 +19,7 @@ var (
 	ReminderAddEventError     = errors.New("ошибка при добавлении напоминания для события")
 	EmptyListError            = errors.New("Список пуст")
 	ArchiveEmptyError         = errors.New("Архив пуст")
+	ErrEmptyMessage           = errors.New("сообщение пусто")
 )
 
 func IsValidTitle(title string) bool {

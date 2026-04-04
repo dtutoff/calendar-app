@@ -2,6 +2,7 @@ package reminder
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/SamiRemi/project/app/validation"
@@ -14,14 +15,18 @@ type Reminder struct {
 	Timer   *time.Timer
 }
 
-func NewReminder(message string, startAt time.Time, notify func(msg string)) (*Reminder, error) {
+func NewReminder(message string, At time.Time, notify func(msg string)) (*Reminder, error) {
+	if len(strings.TrimSpace(message)) == 0 {
+		return nil, fmt.Errorf("не удается создать напоминание: %w", validation.ErrEmptyMessage)
+	}
+
 	text := validation.IsValidTitle(message)
 	if !text {
 		return nil, validation.IncorrectHeaderFormat
 	}
 	return &Reminder{
 		Message: message,
-		At:      startAt,
+		At:      At,
 		Sent:    false,
 		Timer:   nil,
 	}, nil

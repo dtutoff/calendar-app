@@ -81,7 +81,7 @@ func (e *Event) AddReminder(message string, at time.Time, notify func(msg string
 
 func (e *Event) RemoveReminder() error {
 	if e.Reminder == nil {
-		return validation.ReminderNotExistError
+		return fmt.Errorf("Не удается удалить напоминание :%w ", validation.ReminderNotExistError)
 	}
 	stopped := e.Reminder.Stop()
 	if stopped {

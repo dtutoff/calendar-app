@@ -1,6 +1,8 @@
 package events
 
 import (
+	"fmt"
+
 	"github.com/SamiRemi/project/app/validation"
 )
 
@@ -17,6 +19,6 @@ func (p Priority) Validate() error {
 	case PriorityLow, PriorityMedium, PriorityHigh:
 		return nil
 	default:
-		return validation.IncorrectPriorityError
+		return fmt.Errorf("Не удается установить приоритет:%w", validation.IncorrectPriorityError)
 	}
 }
