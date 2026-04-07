@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SamiRemi/project/app/events"
+	"github.com/SamiRemi/project/app/logger"
 	"github.com/SamiRemi/project/app/storage"
 	"github.com/SamiRemi/project/app/validation"
 	"github.com/araddon/dateparse"
@@ -32,6 +33,7 @@ func show() {
 }
 
 func (c *Calendar) AddEvent(title, date string, priority events.Priority) (*events.Event, error) {
+	logger.Info("Запуск функции AddEvent")
 	e, err := events.NewEvent(title, date, priority)
 	if err != nil {
 		return nil, err
@@ -51,6 +53,7 @@ func (c *Calendar) Notify(msg string) {
 }
 
 func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
+	logger.Info("Запуск функции SetEventReminder")
 	if c == nil {
 		return fmt.Errorf("Не удается установить напоминание о событие : %w", validation.EqualError)
 	}
@@ -77,6 +80,7 @@ func (c *Calendar) SetEventReminder(ID, message, dateStr string) error {
 }
 
 func (c *Calendar) CancelEventReminder(ID string) error {
+	logger.Info("Запуск функции CancelEventReminder")
 	event, exists := c.calendarEvents[ID]
 	if !exists {
 		return fmt.Errorf("Не удается удалить напоминание :%w ", validation.EventNotFoundError)
@@ -88,6 +92,7 @@ func (c *Calendar) CancelEventReminder(ID string) error {
 }
 
 func (c *Calendar) ShowEvent() error {
+	logger.Info("Запуск функции ShowEvent")
 	if len(c.calendarEvents) == 0 {
 		return fmt.Errorf("Не удается показать список всех событий :%w ", validation.EmptyListError)
 	}
@@ -95,8 +100,7 @@ func (c *Calendar) ShowEvent() error {
 		utcTime := v.StartAt.UTC()
 		fmt.Println(v.Title, "", utcTime.Format("02.01.2006 15:04"), "", v.Priority, v.ID)
 
-		err := v.Reminder
-		if err != nil {
+		if v.Reminder != nil {
 			fmt.Println("Есть напоминание", v.Reminder.Message, " ", v.Reminder.Timer)
 		}
 	}
@@ -104,20 +108,22 @@ func (c *Calendar) ShowEvent() error {
 }
 
 func (c *Calendar) DeleteEvent(ID string) error {
-	e := c.calendarEvents[ID]
-	if _, ok := c.calendarEvents[ID]; !ok {
-		return fmt.Errorf("Не удается удалить событие :%w ", validation.EventNotFoundError)
+	logger.Info("Запуск функции DeleteEvent")
+	event, exists := c.calendarEvents[ID]
+	if !exists {
+		return fmt.Errorf("Не удается удалить событие: %w", validation.EventNotFoundError)
 	}
-	delete(c.calendarEvents, e.ID)
+	delete(c.calendarEvents, ID)
 	c.Save()
 	show()
-	fmt.Println("Событие :", e.Title, "Удалено")
+	fmt.Println("Событие:", event.Title, "удалено")
 	show()
 	fmt.Println("")
 	return nil
 }
 
 func (c *Calendar) EditEvent(id, newTitle, dateStr string, p events.Priority) error {
+	logger.Info("Запуск функции EditEvent")
 	e, exist := c.calendarEvents[id]
 	if !exist {
 		return fmt.Errorf("Не удается изменить событие :%w ", validation.EventNotFoundError)

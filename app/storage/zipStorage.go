@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/SamiRemi/project/app/logger"
 	"github.com/SamiRemi/project/app/validation"
 )
 
@@ -13,6 +14,7 @@ type ZipStorage struct {
 }
 
 func NewZipStorage(filename string) *ZipStorage {
+	logger.Info("Запуск фукции NewZipStorage")
 	return &ZipStorage{
 		&Storage{
 			filename: filename,
@@ -20,6 +22,7 @@ func NewZipStorage(filename string) *ZipStorage {
 	}
 }
 func (z *ZipStorage) Save(data []byte) error {
+	logger.Info("Запуск фукции Save")
 	f, err := os.Create(z.GetFilename())
 	if err != nil {
 		return err
@@ -39,6 +42,7 @@ func (z *ZipStorage) Save(data []byte) error {
 }
 
 func (z *ZipStorage) Load() ([]byte, error) {
+	logger.Info("Запуск функции Load")
 	r, err := zip.OpenReader(z.GetFilename())
 	if err != nil {
 		return nil, err

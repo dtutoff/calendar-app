@@ -4,37 +4,28 @@ import (
 	"encoding/json"
 	"os"
 	"sync"
-
-	"github.com/SamiRemi/project/app/calendar"
 )
 
-type Logger struct {
+type Log struct {
 	entries  []string
 	mutex    sync.Mutex
 	filePath string
 }
 
-func (l *Logger) Log(message string) {
+func (l *Log) Log(message string) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	l.entries = append(l.entries, message)
 }
 
-func NewLogger(filePath string) *Logger {
-	return &Logger{
+func NewLogger(filePath string) *Log {
+	return &Log{
 		entries:  make([]string, 0),
 		filePath: filePath,
 	}
 }
 
-func NewCmd(c *calendar.Calendar) *Cmd {
-	return &Cmd{
-		calendar: c,
-		logger:   NewLogger("app.logger"),
-	}
-}
-
-func (l *Logger) SaveToFile() error {
+func (l *Log) SaveToFile() error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
@@ -49,7 +40,7 @@ func (l *Logger) SaveToFile() error {
 	return nil
 }
 
-func (l *Logger) LoadFromFile() error {
+func (l *Log) LoadFromFile() error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
@@ -69,8 +60,4 @@ func (l *Logger) LoadFromFile() error {
 
 	l.entries = append(l.entries, loadedEntries...)
 	return nil
-}
-
-func (l *Logger) logWithoutLock(message string) {
-	l.entries = append(l.entries, message)
 }

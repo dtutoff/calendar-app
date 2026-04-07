@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 
+	"github.com/SamiRemi/project/app/logger"
 	"github.com/SamiRemi/project/app/validation"
 )
 
@@ -15,6 +16,7 @@ const (
 )
 
 func (p Priority) Validate() error {
+	logger.Info("Запуск функции Validate")
 	switch p {
 	case PriorityLow, PriorityMedium, PriorityHigh:
 		return nil

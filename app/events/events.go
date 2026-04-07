@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SamiRemi/project/app/logger"
 	"github.com/SamiRemi/project/app/reminder"
 	"github.com/SamiRemi/project/app/validation"
 	"github.com/araddon/dateparse"
@@ -40,6 +41,7 @@ func validateAndParse(title, dateStr string, p Priority) (string, time.Time, Pri
 }
 
 func NewEvent(title, dateStr string, p Priority) (*Event, error) {
+	logger.Info("Запуск фукции NewEvent")
 	validatedTitle, validatedDate, validatedPriority, err := validateAndParse(title, dateStr, p)
 	if err != nil {
 		return nil, err
@@ -54,6 +56,7 @@ func NewEvent(title, dateStr string, p Priority) (*Event, error) {
 }
 
 func (e *Event) Update(title, dateStr string, p Priority) error {
+	logger.Info("Запуск функции Update")
 	validatedTitle, validatedDate, validatedPriority, err := validateAndParse(title, dateStr, p)
 	if err != nil {
 		return err
@@ -65,6 +68,7 @@ func (e *Event) Update(title, dateStr string, p Priority) error {
 }
 
 func (e *Event) AddReminder(message string, at time.Time, notify func(msg string)) error {
+	logger.Info("Запуск функции AddReminder")
 	reminder, err := reminder.NewReminder(message, at, notify)
 	if err != nil {
 		return err
@@ -80,6 +84,7 @@ func (e *Event) AddReminder(message string, at time.Time, notify func(msg string
 }
 
 func (e *Event) RemoveReminder() error {
+	logger.Info("Запуск функции RemoveReminder")
 	if e.Reminder == nil {
 		return fmt.Errorf("Не удается удалить напоминание :%w ", validation.ReminderNotExistError)
 	}

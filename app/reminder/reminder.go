@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SamiRemi/project/app/logger"
 	"github.com/SamiRemi/project/app/validation"
 )
 
@@ -16,6 +17,7 @@ type Reminder struct {
 }
 
 func NewReminder(message string, At time.Time, notify func(msg string)) (*Reminder, error) {
+	logger.Info("Запуск функции NewReminder")
 	if len(strings.TrimSpace(message)) == 0 {
 		return nil, fmt.Errorf("не удается создать напоминание: %w", validation.ErrEmptyMessage)
 	}
@@ -32,6 +34,7 @@ func NewReminder(message string, At time.Time, notify func(msg string)) (*Remind
 	}, nil
 }
 func (r *Reminder) Send() {
+	logger.Info("Запуск функции  Send")
 	if r.Sent {
 		return
 	}
@@ -40,6 +43,7 @@ func (r *Reminder) Send() {
 }
 
 func (r *Reminder) Start(t time.Duration) {
+	logger.Info("Запуск функции  Start")
 	if r.Timer != nil {
 		r.Timer.Stop()
 		r.Timer = nil
@@ -48,6 +52,7 @@ func (r *Reminder) Start(t time.Duration) {
 }
 
 func (r *Reminder) Stop() bool {
+	logger.Info("Запуск функции  Stop")
 	if r.Timer != nil {
 		fmt.Println("Напоминание удалено")
 		return r.Timer.Stop()

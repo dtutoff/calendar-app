@@ -3,6 +3,8 @@ package validation
 import (
 	"errors"
 	"regexp"
+
+	"github.com/SamiRemi/project/app/logger"
 )
 
 var (
@@ -23,6 +25,7 @@ var (
 )
 
 func IsValidTitle(title string) bool {
+	logger.Info("Запуск функции IsValidTitle")
 	pattern := "^[а-яА-Яa-zA-Z0-9 ,/.]{3,50}$"
 	matched, err := regexp.MatchString(pattern, title)
 	if err != nil {
