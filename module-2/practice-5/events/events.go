@@ -14,18 +14,38 @@ type Event struct {
 	StartAt time.Time
 }
 
-func NewEvent(title string, dateStr string) (Event, error) {
+func NewEvent(title string, dateStr string) (*Event, error) {
 	t, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		return Event{}, errors.New("неверный формат даты")
+		return nil, errors.New("неверный формат даты")
 	}
-	return Event{
+	event := Event{
 		ID:      getNextID(),
 		Title:   title,
 		StartAt: t,
-	}, nil
+	}
+	return &event, nil
+}
+
+func (e *Event) Update(title string, date string) error {
+	t, err := GetDate(date)
+	if err != nil {
+		return err
+	}
+
+	e.Title = title
+	e.StartAt = t
+	return nil
 }
 
 func getNextID() string {
 	return uuid.New().String()
+}
+
+func GetDate(date string) (time.Time, error) {
+	t, err := dateparse.ParseAny(date)
+	if err != nil {
+		return time.Time{}, errors.New("неверный формат даты")
+	}
+	return t, nil
 }
