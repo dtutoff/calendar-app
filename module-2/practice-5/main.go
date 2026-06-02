@@ -30,5 +30,12 @@ func main() {
 		fmt.Println("Event updated")
 	}
 
+	err3 := c.DeleteEvent(event2.ID)
+	if err3 != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Printf("Event %s deleted\n", event2.ID)
+	}
+
 	c.ShowEvents()
 }

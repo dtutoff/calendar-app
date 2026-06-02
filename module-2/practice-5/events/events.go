@@ -15,16 +15,15 @@ type Event struct {
 }
 
 func NewEvent(title string, dateStr string) (*Event, error) {
-	t, err := dateparse.ParseAny(dateStr)
+	t, err := GetDate(dateStr)
 	if err != nil {
-		return nil, errors.New("неверный формат даты")
+		return nil, err
 	}
-	event := Event{
+	return &Event{
 		ID:      getNextID(),
 		Title:   title,
 		StartAt: t,
-	}
-	return &event, nil
+	}, nil
 }
 
 func (e *Event) Update(title string, date string) error {
@@ -45,7 +44,7 @@ func getNextID() string {
 func GetDate(date string) (time.Time, error) {
 	t, err := dateparse.ParseAny(date)
 	if err != nil {
-		return time.Time{}, errors.New("неверный формат даты")
+		return time.Time{}, errors.New("incorrect date format")
 	}
 	return t, nil
 }

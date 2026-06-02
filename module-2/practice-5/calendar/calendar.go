@@ -20,6 +20,8 @@ func (c *Calendar) AddEvent(title string, date string) (*events.Event, error) {
 		return nil, fmt.Errorf("error creating event: %w", err)
 	}
 
+	c.calendarEvents[e.ID] = e
+
 	return e, nil
 }
 
@@ -37,16 +39,17 @@ func (c *Calendar) EditEvent(id string, title string, date string) error {
 	return nil
 }
 
-func (c *Calendar) DeleteEvent(id string) {
-	for key, _ := range c.calendarEvents {
-		if key == id {
-			delete(c.calendarEvents, key)
-		}
+func (c *Calendar) DeleteEvent(id string) error {
+	if _, exists := c.calendarEvents[id]; !exists {
+		return fmt.Errorf("event with id %q not found", id)
 	}
+
+	delete(c.calendarEvents, id)
+	return nil
 }
 
 func (c *Calendar) ShowEvents() {
-	for key := range c.calendarEvents {
-		fmt.Println(c.calendarEvents[key])
+	for _, e := range c.calendarEvents {
+		fmt.Printf("ID: %s | Title: %s | Start: %s\n", e.ID, e.Title, e.StartAt.Format("02.01.2006 15:04"))
 	}
 }
