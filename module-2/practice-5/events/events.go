@@ -9,9 +9,9 @@ import (
 )
 
 type Event struct {
-	ID      string
-	Title   string
-	StartAt time.Time
+	ID      string    `json:"id"`
+	Title   string    `json:"title"`
+	StartAt time.Time `json:"start_at"`
 }
 
 func NewEvent(title string, dateStr string) (*Event, error) {

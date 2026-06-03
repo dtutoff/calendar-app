@@ -4,10 +4,18 @@ import (
 	"fmt"
 
 	"github.com/dtutoff/app/calendar"
+	"github.com/dtutoff/app/storage"
 )
 
 func main() {
-	c := calendar.NewCalendar()
+	s := storage.NewStorage("./calendar.json")
+	c := calendar.NewCalendar(s)
+
+	err := c.Load()
+	if err != nil {
+		fmt.Println("Loading error:", err)
+		return
+	}
 
 	event1, err1 := c.AddEvent("Meeting", "2025/06/12")
 	if err1 != nil {
@@ -23,9 +31,9 @@ func main() {
 		fmt.Println(event2.Title, "added")
 	}
 
-	err := c.EditEvent(event2.ID, "Call", "2025/06/12 16:50")
-	if err != nil {
-		fmt.Println("Error:", err)
+	err4 := c.EditEvent(event2.ID, "Call", "2025/06/12 16:50")
+	if err4 != nil {
+		fmt.Println("Error:", err4)
 	} else {
 		fmt.Println("Event updated")
 	}
