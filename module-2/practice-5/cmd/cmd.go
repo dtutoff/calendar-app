@@ -77,6 +77,16 @@ func (c *Cmd) executor(input string) {
 		if err != nil {
 			fmt.Println("Error updating event:", err)
 		}
+	case "remind":
+
+		id := parts[1]
+		message := parts[2]
+		at := parts[3]
+
+		err := c.calendar.SetEventReminder(id, message, at)
+		if err != nil {
+			fmt.Println("Error reminding event:", err)
+		}
 
 	case "exit":
 		err := c.calendar.Save()
@@ -87,10 +97,11 @@ func (c *Cmd) executor(input string) {
 
 	case "help":
 		commandList := map[string]string{
-			"add":    "Add event - Syntax: add \"id\" \"name event\" \"date\" \"priority\"",
+			"add":    "Add event - Syntax: add \"name event\" \"date\" \"priority\"",
 			"list":   "Show all events - Syntax: list",
 			"remove": "Delete event - Syntax: remove \"id\"",
 			"update": "Update event - Syntax: update \"id\" \"name event\" \"date\" \"priority\"",
+			"remind": "Set event reminder - Syntax: remind \"id\" \"reminder message\" \"date\"",
 			"help":   "Show list of commands - Syntax: help",
 			"exit":   "Exit program - Syntax: exit",
 		}
@@ -109,10 +120,11 @@ func (c *Cmd) executor(input string) {
 
 func (c *Cmd) completer(d prompt.Document) []prompt.Suggest {
 	suggestions := []prompt.Suggest{
-		{Text: "add", Description: "Edd event"},
+		{Text: "add", Description: "Add new event"},
 		{Text: "list", Description: "Show events"},
 		{Text: "remove", Description: "Delete event"},
 		{Text: "update", Description: "Update event"},
+		{Text: "remind", Description: "Add event reminder"},
 		{Text: "help", Description: "Show commands"},
 		{Text: "exit", Description: "Exit program"},
 	}

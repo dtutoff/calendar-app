@@ -61,6 +61,7 @@ func (e *Event) AddReminder(message string, at string) error {
 	}
 
 	e.Reminder = r
+	r.Start()
 	return nil
 }
 
@@ -68,6 +69,7 @@ func (e *Event) RemoveReminder() error {
 	if e.Reminder == nil {
 		return fmt.Errorf("event has no reminder")
 	}
+	e.Reminder.Stop()
 	e.Reminder = nil
 	return nil
 }
@@ -82,7 +84,7 @@ func (p Priority) Validate() error {
 }
 
 func validateDate(date string) time.Time {
-	t, err := dateparse.ParseAny(date)
+	t, err := dateparse.ParseIn(date, time.Local)
 	if err != nil {
 		fmt.Println(err)
 	}

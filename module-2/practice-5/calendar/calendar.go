@@ -37,7 +37,19 @@ func (c *Calendar) Load() error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, &c.calendarEvents)
+
+	err = json.Unmarshal(data, &c.calendarEvents)
+	if err != nil {
+		return err
+	}
+
+	for _, e := range c.calendarEvents {
+		if e.Reminder != nil && !e.Reminder.Sent {
+			e.Reminder.Start()
+		}
+	}
+
+	return nil
 }
 
 func (c *Calendar) autoSave() {
@@ -50,7 +62,7 @@ func (c *Calendar) AddEvent(title string, date string, priority events.Priority)
 	if title == "" {
 		return nil, fmt.Errorf("title cannot be empty")
 	}
-	d, err := dateparse.ParseAny(date)
+	d, err := dateparse.ParseIn(date, time.Local)
 	if err != nil {
 		return nil, err
 	}
