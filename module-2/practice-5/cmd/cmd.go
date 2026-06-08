@@ -44,19 +44,26 @@ func (c *Cmd) executor(input string) {
 		if err != nil {
 			fmt.Println("Error adding event:", err)
 		} else {
+			err := c.calendar.Save()
+			if err != nil {
+				fmt.Println("Error saving calendar:", err)
+			}
 			fmt.Println("Event:", e.Title, "added")
 		}
 	case "list":
 		c.calendar.ShowEvents()
 
 	case "remove":
-		err := c.calendar.DeleteEvent(parts[1])
-
 		eventId := parts[1]
 
+		err := c.calendar.DeleteEvent(parts[1])
 		if err != nil {
 			fmt.Println("Error deleting event:", err)
 		} else {
+			err := c.calendar.Save()
+			if err != nil {
+				fmt.Println("Error saving calendar:", err)
+			}
 			fmt.Println("Event with ID:", eventId, "was deleted")
 		}
 
@@ -76,6 +83,11 @@ func (c *Cmd) executor(input string) {
 		err := c.calendar.EditEvent(id, title, date, priority)
 		if err != nil {
 			fmt.Println("Error updating event:", err)
+		} else {
+			err := c.calendar.Save()
+			if err != nil {
+				fmt.Println("Error saving calendar:", err)
+			}
 		}
 	case "remind":
 
@@ -86,6 +98,11 @@ func (c *Cmd) executor(input string) {
 		err := c.calendar.SetEventReminder(id, message, at)
 		if err != nil {
 			fmt.Println("Error reminding event:", err)
+		} else {
+			err := c.calendar.Save()
+			if err != nil {
+				fmt.Println("Error saving calendar:", err)
+			}
 		}
 
 	case "exit":

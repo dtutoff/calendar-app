@@ -52,12 +52,6 @@ func (c *Calendar) Load() error {
 	return nil
 }
 
-func (c *Calendar) autoSave() {
-	if err := c.Save(); err != nil {
-		fmt.Println("Auto-save error:", err)
-	}
-}
-
 func (c *Calendar) AddEvent(title string, date string, priority events.Priority) (*events.Event, error) {
 	if title == "" {
 		return nil, fmt.Errorf("title cannot be empty")
@@ -69,8 +63,6 @@ func (c *Calendar) AddEvent(title string, date string, priority events.Priority)
 	if c.eventExists(title, d) {
 		return nil, fmt.Errorf(`title "%s" already exists`, title)
 	}
-
-	defer c.autoSave()
 
 	e, err1 := events.NewEvent(title, date, priority)
 	if err1 != nil {
@@ -87,7 +79,6 @@ func (c *Calendar) SetEventReminder(eventID string, message string, at string) e
 		return fmt.Errorf("event with ID %s not found", eventID)
 	}
 
-	defer c.autoSave()
 	return event.AddReminder(message, at)
 }
 
@@ -97,12 +88,10 @@ func (c *Calendar) RemoveEventReminder(eventID string) error {
 		return fmt.Errorf("event not found")
 	}
 
-	defer c.autoSave()
 	return event.RemoveReminder()
 }
 
 func (c *Calendar) EditEvent(id string, title string, date string, priority events.Priority) error {
-	defer c.autoSave()
 
 	e, exists := c.calendarEvents[id]
 	if !exists {
@@ -117,7 +106,6 @@ func (c *Calendar) DeleteEvent(id string) error {
 		return fmt.Errorf("event with id %q not found", id)
 	}
 
-	defer c.autoSave()
 	delete(c.calendarEvents, id)
 	return nil
 }
