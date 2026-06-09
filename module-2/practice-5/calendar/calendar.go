@@ -13,12 +13,14 @@ import (
 type Calendar struct {
 	calendarEvents map[string]*events.Event
 	storage        storage.Store
+	Notification   chan string
 }
 
 func NewCalendar(s storage.Store) *Calendar {
 	return &Calendar{
 		calendarEvents: make(map[string]*events.Event),
 		storage:        s,
+		Notification:   make(chan string),
 	}
 }
 
@@ -38,18 +40,7 @@ func (c *Calendar) Load() error {
 		return err
 	}
 
-	err = json.Unmarshal(data, &c.calendarEvents)
-	if err != nil {
-		return err
-	}
-
-	for _, e := range c.calendarEvents {
-		if e.Reminder != nil && !e.Reminder.Sent {
-			e.Reminder.Start()
-		}
-	}
-
-	return nil
+	return json.Unmarshal(data, &c.calendarEvents)
 }
 
 func (c *Calendar) AddEvent(title string, date string, priority events.Priority) (*events.Event, error) {
@@ -79,7 +70,7 @@ func (c *Calendar) SetEventReminder(eventID string, message string, at string) e
 		return fmt.Errorf("event with ID %s not found", eventID)
 	}
 
-	return event.AddReminder(message, at)
+	return event.AddReminder(message, at, c.Notify)
 }
 
 func (c *Calendar) RemoveEventReminder(eventID string) error {
@@ -114,6 +105,10 @@ func (c *Calendar) ShowEvents() {
 	for _, e := range c.calendarEvents {
 		fmt.Printf("ID: %s | Title: %s | Start: %s | Priority: %s\n", e.ID, e.Title, e.StartAt.Format("02.01.2006 15:04"), e.Priority)
 	}
+}
+
+func (c *Calendar) Notify(message string) {
+	c.Notification <- message
 }
 
 func (c *Calendar) eventExists(title string, startAt time.Time) bool {

@@ -110,6 +110,7 @@ func (c *Cmd) executor(input string) {
 		if err != nil {
 			fmt.Println("Saving error:", err)
 		}
+		close(c.calendar.Notification)
 		os.Exit(0)
 
 	case "help":
@@ -155,5 +156,10 @@ func (c *Cmd) Run() {
 		c.completer,
 		prompt.OptionPrefix("> "),
 	)
+	go func() {
+		for message := range c.calendar.Notification {
+			fmt.Println(message)
+		}
+	}()
 	p.Run()
 }

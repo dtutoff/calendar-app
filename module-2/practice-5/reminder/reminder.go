@@ -9,13 +9,14 @@ import (
 )
 
 type Reminder struct {
-	Message string
-	At      time.Time
-	Sent    bool
-	timer   *time.Timer
+	Message string       `json:"message"`
+	At      time.Time    `json:"at"`
+	Sent    bool         `json:"-"`
+	Timer   *time.Timer  `json:"-"`
+	Notify  func(string) `json:"-"`
 }
 
-func NewReminder(message string, at string) (*Reminder, error) {
+func NewReminder(message string, at string, notify func(string)) (*Reminder, error) {
 	if message == "" {
 		return nil, errors.New("reminder message is empty")
 	}
@@ -31,6 +32,7 @@ func NewReminder(message string, at string) (*Reminder, error) {
 		Message: message,
 		At:      d,
 		Sent:    false,
+		Notify:  notify,
 	}, nil
 }
 
@@ -38,13 +40,13 @@ func (r *Reminder) Send() {
 	if r.Sent {
 		return
 	}
-	fmt.Println(r.Message)
+	r.Notify(r.Message)
 	r.Sent = true
 }
 
 func (r *Reminder) Stop() {
-	if r.timer != nil {
-		r.timer.Stop()
+	if r.Timer != nil {
+		r.Timer.Stop()
 	}
 }
 
@@ -56,7 +58,7 @@ func (r *Reminder) Start() {
 		return
 	}
 
-	r.timer = time.AfterFunc(delay, func() {
+	r.Timer = time.AfterFunc(delay, func() {
 		r.Send()
 	})
 }
