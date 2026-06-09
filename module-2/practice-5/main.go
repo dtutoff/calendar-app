@@ -9,18 +9,27 @@ import (
 )
 
 func main() {
-	s, err4 := storage.NewStorage("./calendar.json")
-	if err4 != nil {
-		fmt.Println("Error:", err4)
+	s, err := storage.NewStorage("./calendar.json")
+	if err != nil {
+		fmt.Println("Error creating calendar storage:", err)
+		return
 	}
 	c := calendar.NewCalendar(s)
 
-	err := c.Load()
+	l, err := storage.NewLogStorage("./logs.txt")
+	if err != nil {
+		fmt.Println("Error creating log storage:", err)
+		return
+	}
+
+	logger := cmd.NewLogger(l)
+	cli := cmd.NewCmd(c, logger)
+
+	err = c.Load()
 	if err != nil {
 		fmt.Println("Loading error:", err)
 		return
 	}
 
-	cli := cmd.NewCmd(c)
 	cli.Run()
 }

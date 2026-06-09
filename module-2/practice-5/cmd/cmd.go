@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -11,12 +12,25 @@ import (
 	"github.com/google/shlex"
 )
 
+var (
+	ErrInvalidInput = errors.New("invalid input")
+	ErrFailedToSave = errors.New("failed to save data")
+	ErrEventUpdate  = errors.New("failed to update event")
+	ErrEventAdd     = errors.New("error adding event")
+	ErrEventDelete  = errors.New("error deleting event")
+	ErrReminderAdd  = errors.New("error adding reminder")
+)
+
 type Cmd struct {
 	calendar *calendar.Calendar
+	logger   *Logger
 }
 
-func NewCmd(c *calendar.Calendar) *Cmd {
-	return &Cmd{calendar: c}
+func NewCmd(c *calendar.Calendar, logger *Logger) *Cmd {
+	return &Cmd{
+		calendar: c,
+		logger:   logger,
+	}
 }
 
 func (c *Cmd) executor(input string) {
@@ -31,8 +45,9 @@ func (c *Cmd) executor(input string) {
 	switch cmd {
 	case "add":
 		if len(parts) < 4 {
-			fmt.Println("invalid input")
-			fmt.Println(`Syntax: add "id" "name event" "date" "priority"`)
+			fmt.Println(ErrInvalidInput)
+			c.logger.Add(fmt.Sprintf("add: %s", ErrInvalidInput))
+			fmt.Println(`Syntax: add "name event" "date" "priority"`)
 			return
 		}
 
@@ -42,35 +57,53 @@ func (c *Cmd) executor(input string) {
 
 		e, err := c.calendar.AddEvent(title, date, priority)
 		if err != nil {
-			fmt.Println("Error adding event:", err)
-		} else {
-			err := c.calendar.Save()
-			if err != nil {
-				fmt.Println("Error saving calendar:", err)
-			}
-			fmt.Println("Event:", e.Title, "added")
+			fmt.Println(ErrEventAdd, err)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrEventAdd, err))
+			return
 		}
+		err1 := c.calendar.Save()
+		if err1 != nil {
+			fmt.Println(ErrFailedToSave, err1)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrFailedToSave, err1))
+			return
+		}
+		fmt.Println("Event:", e.Title, "added")
+		c.logger.Add(fmt.Sprintf("Event with id %s was added", e.ID))
+
 	case "list":
 		c.calendar.ShowEvents()
+		c.logger.Add("User viewed all events")
 
 	case "remove":
+		if len(parts) < 2 {
+			fmt.Println(ErrInvalidInput)
+			c.logger.Add(fmt.Sprintf("remove: %s", ErrInvalidInput))
+			fmt.Println(`Syntax: remove "id"`)
+			return
+		}
+
 		eventId := parts[1]
 
 		err := c.calendar.DeleteEvent(parts[1])
 		if err != nil {
-			fmt.Println("Error deleting event:", err)
-		} else {
-			err := c.calendar.Save()
-			if err != nil {
-				fmt.Println("Error saving calendar:", err)
-			}
-			fmt.Println("Event with ID:", eventId, "was deleted")
+			fmt.Println(ErrEventDelete, err)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrEventDelete, err))
+			return
 		}
+		err1 := c.calendar.Save()
+		if err1 != nil {
+			fmt.Println(ErrFailedToSave, err1)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrFailedToSave, err1))
+			return
+		}
+		fmt.Println("Event with ID:", eventId, "was deleted")
+		c.logger.Add(fmt.Sprintf("Event with id %s was removed", eventId))
 
 	case "update":
 
 		if len(parts) < 5 {
-			fmt.Println("invalid input")
+			fmt.Println(ErrEventUpdate)
+			c.logger.Add(fmt.Sprintf("update: %s", ErrFailedToSave))
 			fmt.Println(`Syntax: update "id" "name event" "date" "priority"`)
 			return
 		}
@@ -82,14 +115,26 @@ func (c *Cmd) executor(input string) {
 
 		err := c.calendar.EditEvent(id, title, date, priority)
 		if err != nil {
-			fmt.Println("Error updating event:", err)
-		} else {
-			err := c.calendar.Save()
-			if err != nil {
-				fmt.Println("Error saving calendar:", err)
-			}
+			fmt.Println(ErrEventUpdate, err)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrEventUpdate, err))
+			return
 		}
+		err1 := c.calendar.Save()
+		if err1 != nil {
+			fmt.Println(ErrFailedToSave, err1)
+			c.logger.Add(ErrFailedToSave.Error())
+			return
+		}
+		fmt.Println("Event:", id, "was updated")
+		c.logger.Add(fmt.Sprintf("Event with id %s was updated", id))
+
 	case "remind":
+		if len(parts) < 2 {
+			fmt.Println(ErrReminderAdd)
+			c.logger.Add(fmt.Sprintf("update: %s", ErrReminderAdd))
+			fmt.Println(`Syntax: remind "id" "reminder message" "date"`)
+			return
+		}
 
 		id := parts[1]
 		message := parts[2]
@@ -97,18 +142,24 @@ func (c *Cmd) executor(input string) {
 
 		err := c.calendar.SetEventReminder(id, message, at)
 		if err != nil {
-			fmt.Println("Error reminding event:", err)
-		} else {
-			err := c.calendar.Save()
-			if err != nil {
-				fmt.Println("Error saving calendar:", err)
-			}
+			fmt.Println(ErrReminderAdd, err)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrReminderAdd, err))
+			return
 		}
+		err1 := c.calendar.Save()
+		if err1 != nil {
+			fmt.Println(ErrFailedToSave, err1)
+			c.logger.Add(ErrFailedToSave.Error())
+			return
+		}
+		fmt.Println("Reminder added")
+		c.logger.Add(fmt.Sprintf("Reminder %s was added", message))
 
 	case "exit":
 		err := c.calendar.Save()
 		if err != nil {
-			fmt.Println("Saving error:", err)
+			fmt.Println(ErrFailedToSave, err)
+			c.logger.Add(fmt.Sprintf("%s: %v", ErrFailedToSave, err))
 		}
 		close(c.calendar.Notification)
 		os.Exit(0)
