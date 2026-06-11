@@ -9,14 +9,14 @@ import (
 )
 
 func main() {
-	s, err := storage.NewStorage("./calendar.json")
+	s, err := storage.NewJSONFileStorage("./calendar.json")
 	if err != nil {
 		fmt.Println("Error creating calendar storage:", err)
 		return
 	}
 	c := calendar.NewCalendar(s)
 
-	l, err := storage.NewLogStorage("./logs.txt")
+	l, err := storage.NewTextFileStorage("./logs.txt")
 	if err != nil {
 		fmt.Println("Error creating log storage:", err)
 		return

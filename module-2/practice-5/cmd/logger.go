@@ -10,10 +10,10 @@ import (
 type Logger struct {
 	logs    []string
 	mu      sync.Mutex
-	storage *storage.LogStorage
+	storage storage.Store
 }
 
-func NewLogger(s *storage.LogStorage) *Logger {
+func NewLogger(s storage.Store) *Logger {
 	logger := &Logger{
 		logs:    make([]string, 0),
 		storage: s,
@@ -29,13 +29,15 @@ func NewLogger(s *storage.LogStorage) *Logger {
 	return logger
 }
 
-func (l *Logger) Add(entry string) {
+func (l *Logger) Add(entry string) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.logs = append(l.logs, entry)
 
 	if l.storage != nil {
 		data := []byte(strings.Join(l.logs, "\n"))
-		l.storage.Save(data)
+		return l.storage.Save(data)
 	}
+
+	return nil
 }
