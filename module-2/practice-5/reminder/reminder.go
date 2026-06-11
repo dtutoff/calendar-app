@@ -21,7 +21,12 @@ func NewReminder(message string, at string, notify func(string)) (*Reminder, err
 		return nil, errors.New("reminder message is empty")
 	}
 
-	d, err := dateparse.ParseIn(at, time.Local)
+	d, err1 := dateparse.ParseIn(at, time.Local)
+	if err1 != nil {
+		return nil, err1
+	}
+
+	err := validateReminderDate(d)
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +55,26 @@ func (r *Reminder) Stop() {
 	}
 }
 
-func (r *Reminder) Start() {
-	delay := time.Until(r.At)
+func (r *Reminder) Start() error {
 
-	if delay <= 0 {
-		fmt.Println("Date reminder is invalid")
-		return
+	err := validateReminderDate(r.At)
+	if err != nil {
+		return err
 	}
+
+	delay := time.Until(r.At)
 
 	r.Timer = time.AfterFunc(delay, func() {
 		r.Send()
 	})
+
+	return nil
+}
+
+func validateReminderDate(date time.Time) error {
+	if time.Until(date) <= 0 {
+		return errors.New("reminder's date is invalid")
+	}
+
+	return nil
 }

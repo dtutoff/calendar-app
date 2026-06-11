@@ -3,6 +3,7 @@ package calendar
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -14,6 +15,7 @@ type Calendar struct {
 	calendarEvents map[string]*events.Event
 	storage        storage.Store
 	Notification   chan string
+	mu             sync.RWMutex
 }
 
 func NewCalendar(s storage.Store) *Calendar {
@@ -41,6 +43,19 @@ func (c *Calendar) Load() error {
 	}
 
 	return json.Unmarshal(data, &c.calendarEvents)
+}
+
+func (c *Calendar) Close() error {
+	err := c.Save()
+	if err != nil {
+		return err
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	close(c.Notification)
+	return nil
 }
 
 func (c *Calendar) AddEvent(title string, date string, priority events.Priority) (*events.Event, error) {

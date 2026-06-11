@@ -1,24 +1,12 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
 	"github.com/dtutoff/app/calendar"
-	"github.com/dtutoff/app/events"
 	"github.com/google/shlex"
-)
-
-var (
-	ErrInvalidInput = errors.New("invalid input")
-	ErrFailedToSave = errors.New("failed to save data")
-	ErrEventUpdate  = errors.New("failed to update event")
-	ErrEventAdd     = errors.New("error adding event")
-	ErrEventDelete  = errors.New("error deleting event")
-	ErrReminderAdd  = errors.New("error adding reminder")
 )
 
 type Cmd struct {
@@ -40,146 +28,56 @@ func (c *Cmd) executor(input string) {
 		return
 	}
 
+	if len(parts) == 0 {
+		return
+	}
+
 	cmd := strings.ToLower(parts[0])
+	args := parts[1:]
 
 	switch cmd {
 	case "add":
-		if len(parts) < 4 {
-			fmt.Println(ErrInvalidInput)
-			c.logger.Add(fmt.Sprintf("add: %s", ErrInvalidInput))
-			fmt.Println(`Syntax: add "name event" "date" "priority"`)
-			return
-		}
-
-		title := parts[1]
-		date := parts[2]
-		priority := events.Priority(parts[3])
-
-		e, err := c.calendar.AddEvent(title, date, priority)
+		err := Add(c, args)
 		if err != nil {
-			fmt.Println(ErrEventAdd, err)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrEventAdd, err))
+			fmt.Println(err)
 			return
 		}
-		err1 := c.calendar.Save()
-		if err1 != nil {
-			fmt.Println(ErrFailedToSave, err1)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrFailedToSave, err1))
-			return
-		}
-		fmt.Println("Event:", e.Title, "added")
-		c.logger.Add(fmt.Sprintf("Event with id %s was added", e.ID))
 
 	case "list":
 		c.calendar.ShowEvents()
 		c.logger.Add("User viewed all events")
 
 	case "remove":
-		if len(parts) < 2 {
-			fmt.Println(ErrInvalidInput)
-			c.logger.Add(fmt.Sprintf("remove: %s", ErrInvalidInput))
-			fmt.Println(`Syntax: remove "id"`)
-			return
-		}
-
-		eventId := parts[1]
-
-		err := c.calendar.DeleteEvent(parts[1])
+		err := Remove(c, args)
 		if err != nil {
-			fmt.Println(ErrEventDelete, err)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrEventDelete, err))
+			fmt.Println(err)
 			return
 		}
-		err1 := c.calendar.Save()
-		if err1 != nil {
-			fmt.Println(ErrFailedToSave, err1)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrFailedToSave, err1))
-			return
-		}
-		fmt.Println("Event with ID:", eventId, "was deleted")
-		c.logger.Add(fmt.Sprintf("Event with id %s was removed", eventId))
 
 	case "update":
-
-		if len(parts) < 5 {
-			fmt.Println(ErrEventUpdate)
-			c.logger.Add(fmt.Sprintf("update: %s", ErrFailedToSave))
-			fmt.Println(`Syntax: update "id" "name event" "date" "priority"`)
-			return
-		}
-
-		id := parts[1]
-		title := parts[2]
-		date := parts[3]
-		priority := events.Priority(parts[4])
-
-		err := c.calendar.EditEvent(id, title, date, priority)
+		err := Update(c, args)
 		if err != nil {
-			fmt.Println(ErrEventUpdate, err)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrEventUpdate, err))
+			fmt.Println(err)
 			return
 		}
-		err1 := c.calendar.Save()
-		if err1 != nil {
-			fmt.Println(ErrFailedToSave, err1)
-			c.logger.Add(ErrFailedToSave.Error())
-			return
-		}
-		fmt.Println("Event:", id, "was updated")
-		c.logger.Add(fmt.Sprintf("Event with id %s was updated", id))
 
 	case "remind":
-		if len(parts) < 2 {
-			fmt.Println(ErrReminderAdd)
-			c.logger.Add(fmt.Sprintf("update: %s", ErrReminderAdd))
-			fmt.Println(`Syntax: remind "id" "reminder message" "date"`)
-			return
-		}
-
-		id := parts[1]
-		message := parts[2]
-		at := parts[3]
-
-		err := c.calendar.SetEventReminder(id, message, at)
+		err := Remind(c, args)
 		if err != nil {
-			fmt.Println(ErrReminderAdd, err)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrReminderAdd, err))
-			return
-		}
-		err1 := c.calendar.Save()
-		if err1 != nil {
-			fmt.Println(ErrFailedToSave, err1)
-			c.logger.Add(ErrFailedToSave.Error())
+			fmt.Println(err)
 			return
 		}
 		fmt.Println("Reminder added")
-		c.logger.Add(fmt.Sprintf("Reminder %s was added", message))
 
 	case "exit":
-		err := c.calendar.Save()
+		err := Exit(c)
 		if err != nil {
-			fmt.Println(ErrFailedToSave, err)
-			c.logger.Add(fmt.Sprintf("%s: %v", ErrFailedToSave, err))
+			fmt.Println(err)
+			return
 		}
-		close(c.calendar.Notification)
-		os.Exit(0)
 
 	case "help":
-		commandList := map[string]string{
-			"add":    "Add event - Syntax: add \"name event\" \"date\" \"priority\"",
-			"list":   "Show all events - Syntax: list",
-			"remove": "Delete event - Syntax: remove \"id\"",
-			"update": "Update event - Syntax: update \"id\" \"name event\" \"date\" \"priority\"",
-			"remind": "Set event reminder - Syntax: remind \"id\" \"reminder message\" \"date\"",
-			"help":   "Show list of commands - Syntax: help",
-			"exit":   "Exit program - Syntax: exit",
-		}
-
-		fmt.Println("\nAvailable commands:")
-		fmt.Println("-------------------")
-		for command, desc := range commandList {
-			fmt.Printf("  %-8s - %s\n", command, desc)
-		}
+		Help()
 
 	default:
 		fmt.Println("Unknown command")

@@ -26,30 +26,29 @@ type Event struct {
 	Reminder *reminder.Reminder `json:"reminder"`
 }
 
-func NewEvent(title string, dateStr string, priority Priority) (*Event, error) {
-	t := validateDate(dateStr)
-	err1 := priority.Validate()
-	if err1 != nil {
-		return nil, err1
+func NewEvent(title string, date string, priority Priority) (*Event, error) {
+	t, err := validateAddParseEvent(date, priority)
+	if err != nil {
+		return nil, err
 	}
+
 	return &Event{
 		ID:       getNextID(),
 		Title:    title,
-		StartAt:  t,
+		StartAt:  *t,
 		Priority: priority,
 		Reminder: nil,
 	}, nil
 }
 
 func (e *Event) Update(title string, date string, priority Priority) error {
-	t := validateDate(date)
-	err1 := priority.Validate()
-	if err1 != nil {
-		return err1
+	t, err := validateAddParseEvent(date, priority)
+	if err != nil {
+		return err
 	}
 
 	e.Title = title
-	e.StartAt = t
+	e.StartAt = *t
 	e.Priority = priority
 	return nil
 }
@@ -57,12 +56,11 @@ func (e *Event) Update(title string, date string, priority Priority) error {
 func (e *Event) AddReminder(message string, at string, notify func(string)) error {
 	r, err := reminder.NewReminder(message, at, notify)
 	if err != nil {
-		return fmt.Errorf(`error adding "%s" as a reminder`, message)
+		return err
 	}
 
 	e.Reminder = r
-	r.Start()
-	return nil
+	return r.Start()
 }
 
 func (e *Event) RemoveReminder() error {
@@ -83,12 +81,18 @@ func (p Priority) Validate() error {
 	}
 }
 
-func validateDate(date string) time.Time {
+func validateAddParseEvent(date string, priority Priority) (*time.Time, error) {
 	t, err := dateparse.ParseIn(date, time.Local)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	return t
+
+	err = priority.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, nil
 }
 
 func getNextID() string {
